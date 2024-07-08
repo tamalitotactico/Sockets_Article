@@ -24,14 +24,16 @@ public class Servidor {
             });
             enviarMensajes.start();
 
+            int idCliente = 0;
             while (true) {
                 Socket skCliente = skServidor.accept(); // Acepta conexión de cliente
-                System.out.println("Cliente conectado desde " + skCliente.getInetAddress());
+                System.out.println("Cliente conectado desde " + skCliente.getInetAddress()+"#"+idCliente);
 
                 // Crea un nuevo manejador para el cliente y lo añade a la lista
-                ClienteHandler handler = new ClienteHandler(skCliente);
+                ClienteHandler handler = new ClienteHandler(skCliente,idCliente);
                 clientes.add(handler);
                 new Thread(handler).start();
+                idCliente++;
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -55,12 +57,14 @@ public class Servidor {
         private Socket skCliente;
         private DataOutputStream flujoSalida;
         private DataInputStream flujoEntrada;
+        private int idClienteHandles;
 
-        public ClienteHandler(Socket skCliente) {
+        public ClienteHandler(Socket skCliente,int idCliente) {
             this.skCliente = skCliente;
             try {
                 this.flujoSalida = new DataOutputStream(skCliente.getOutputStream());
                 this.flujoEntrada = new DataInputStream(skCliente.getInputStream());
+                this.idClienteHandles = idCliente;
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
@@ -77,14 +81,16 @@ public class Servidor {
         @Override
         public void run() {
             try {
-                flujoSalida.writeUTF("Hola cliente conectado desde " + skCliente.getInetAddress());
+                flujoSalida.writeUTF("Hola cliente conectado desde " + skCliente.getInetAddress()+"#"+this.idClienteHandles);
                 while (true) {
+                  ///metodo para recibir los mensajes de los clientes
                     String msg = flujoEntrada.readUTF();
-                    System.out.println("Mensaje recibido de cliente: " + msg);
+                    System.out.println("Mensaje recibido de cliente: "+"#"+this.idClienteHandles+" " + msg);
                     if (msg.equalsIgnoreCase("exit")) {
                         break;
                     }
-                    enviarMensajeATodos("Cliente " + skCliente.getInetAddress() + ": " + msg);
+                    //lo reeenvia
+                    //enviarMensajeATodos("Cliente " + skCliente.getInetAddress() + ": " + msg);
                 }
                 skCliente.close();
             } catch (IOException e) {
